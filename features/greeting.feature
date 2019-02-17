@@ -9,8 +9,8 @@ Feature: Greeting
       And the job finished with "<status>" status
 
       Examples:
-         | branch_ref                                   | language | message     | status  |
-         | poulad/Jenkins-Sample-Project:specs/pass/foo | English  | Hello World | success |
-         | poulad/Jenkins-Sample-Project:specs/pass/bar | Spanish  | Hola Mundo  | success |
-         | poulad/Jenkins-Sample-Project:specs/pass/bar | Other    | Hello World | success |
-         | poulad/Jenkins-Sample-Project:specs/pass/bar |          | Hello World | success |
+         | branch_ref                                            | language | message     | status  |
+         | poulad/Jenkins-Sample-Project:specs/pass/greeting-eng | English  | Hello World | SUCCESS |
+         | poulad/Jenkins-Sample-Project:specs/pass/greeting-spa | Spanish  | Hola Mundo  | SUCCESS |
+         | poulad/Jenkins-Sample-Project:specs/pass/greeting-fre | French   | Hello World | SUCCESS |
+         | poulad/Jenkins-Sample-Project:specs/pass/greeting---- |          | Hello World | SUCCESS |
