@@ -1,4 +1,4 @@
-import { Given, When, Then, setDefaultTimeout } from 'cucumber'
+import { Given, When, Then } from 'cucumber'
 import { expect } from 'chai'
 
 Given('the branch on GitHub is {string}', (branchRef: string) => {

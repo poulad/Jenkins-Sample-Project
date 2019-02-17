@@ -1,4 +1,4 @@
-import { Given, When, Then, setDefaultTimeout } from 'cucumber'
+import { Given, When, Then } from 'cucumber'
 import { expect } from 'chai'
 
 function isItFriday(today) {
