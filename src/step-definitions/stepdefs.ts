@@ -1,8 +1,6 @@
 import { Given, When, Then, setDefaultTimeout } from 'cucumber'
 import { expect } from 'chai'
 
-setDefaultTimeout(-1)
-
 function isItFriday(today) {
    if (today === "Friday") {
       return "TGIF";

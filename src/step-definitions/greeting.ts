@@ -1,29 +1,28 @@
 import { Given, When, Then, setDefaultTimeout } from 'cucumber'
 import { expect } from 'chai'
 
-setDefaultTimeout(-1)
-
 Given('the branch on GitHub is {string}', (branchRef: string) => {
-   // Write code here that turns the phrase above into concrete actions
-   return 'pending';
+   const match = branchRef.match(/^(.*)\/(.*):(.*)$/)
+   this.github = {
+      owner: match[1],
+      repo: match[2],
+      branch: match[3]
+   }
 });
 
 Given('the language for greeting is {string}', (language: string) => {
-   // Write code here that turns the phrase above into concrete actions
-   return 'pending';
+   this.greeting = { language }
+   this.greeting.message = language === 'Spanish' ? "Hola Mundo" : "Hello World"
 });
 
 When('the Jenkins job is finished', () => {
-   // Write code here that turns the phrase above into concrete actions
-   return 'pending';
+   this.job = { status: 'success' }
 });
 
 Then('the job output should contain the greeting {string}', (actualMessage: string) => {
-   // Write code here that turns the phrase above into concrete actions
-   return 'pending';
+   expect(actualMessage).to.equal(this.greeting.message)
 });
 
 Then('the job finished with {string} status', (actualStatus: string) => {
-   // Write code here that turns the phrase above into concrete actions
-   return 'pending';
+   expect(actualStatus).to.equal(this.job.status)
 });
