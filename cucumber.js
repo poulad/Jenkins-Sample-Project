@@ -1,4 +1,6 @@
 module.exports = {
-    default: `--require-module "ts-node/register" --require "step-definitions/**/*.ts" ` +
-        `--format-options '{"snippetInterface": "synchronous"}' `
+   default: `` +
+      `--require-module "ts-node/register" ` +
+      `--require "src/**/*.ts" ` +
+      `--format-options '{"snippetInterface": "synchronous"}' `
 }

@@ -1,19 +1,23 @@
 {
-  "name": "sample-cucumber",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "cucumber-js"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/cucumber": "^4.0.5",
-    "chai": "^4.2.0",
-    "cucumber": "^5.1.0",
-    "ts-node": "^8.0.2",
-    "typescript": "^3.3.3"
-  }
+   "name": "sample-cucumber",
+   "version": "1.0.0",
+   "description": "",
+   "main": "index.js",
+   "scripts": {
+      "test": "cucumber-js"
+   },
+   "author": "",
+   "license": "ISC",
+   "devDependencies": {
+      "@types/chai": "^4.1.7",
+      "@types/cucumber": "^4.0.5",
+      "@types/jenkins": "^0.23.0",
+      "@types/rx": "^4.1.1",
+      "chai": "^4.2.0",
+      "cucumber": "^5.1.0",
+      "jenkins": "^0.23.0",
+      "rxjs": "^6.4.0",
+      "ts-node": "^8.0.2",
+      "typescript": "^3.3.3"
+   }
 }
