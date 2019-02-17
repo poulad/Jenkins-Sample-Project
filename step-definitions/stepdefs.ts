@@ -1,9 +1,5 @@
-const assert = require('assert');
-const {
-    Given,
-    When,
-    Then
-} = require('cucumber');
+import { Given, When, Then } from 'cucumber'
+import { expect } from "chai";
 
 function isItFriday(today) {
     if (today === "Friday") {
@@ -13,14 +9,14 @@ function isItFriday(today) {
     }
 }
 
-Given('today is {string}', givenDay => {
-    this.today = givenDay;
-});
+Given('today is {string}', (givenDay: string) => {
+    this.today = givenDay
+})
 
 When('I ask whether it\'s Friday yet', () => {
     this.actualAnswer = isItFriday(this.today);
 });
 
 Then('I should be told {string}', expectedAnswer => {
-    assert.equal(this.actualAnswer, expectedAnswer);
+    expect(this.actualAnswer).to.eq(expectedAnswer)
 });
