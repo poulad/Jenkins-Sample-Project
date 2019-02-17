@@ -8,15 +8,20 @@
    },
    "author": "",
    "license": "ISC",
+   "dependencies": {
+      "chai": "^4.2.0",
+      "cucumber": "^5.1.0",
+      "jenkins": "^0.23.0",
+      "rxjs": "^6.4.0",
+      "ulid": "^2.3.0",
+      "winston": "^3.2.1"
+   },
    "devDependencies": {
       "@types/chai": "^4.1.7",
       "@types/cucumber": "^4.0.5",
       "@types/jenkins": "^0.23.0",
       "@types/rx": "^4.1.1",
-      "chai": "^4.2.0",
-      "cucumber": "^5.1.0",
-      "jenkins": "^0.23.0",
-      "rxjs": "^6.4.0",
+      "@types/winston": "^2.4.4",
       "ts-node": "^8.0.2",
       "typescript": "^3.3.3"
    }

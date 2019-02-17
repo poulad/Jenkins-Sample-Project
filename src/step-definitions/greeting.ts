@@ -1,54 +1,106 @@
-import { Given, When, Then } from 'cucumber'
+import { Given, When, Then, Before } from 'cucumber'
+import { ulid } from 'ulid';
 import { expect } from 'chai'
 import { JenkinsClient } from '../jenkins-client';
 import { sleep } from './timeout';
+import winston = require('winston');
+
+interface ScenarioState {
+   logger: winston.Logger,
+   github: {
+      owner: string,
+      repo: string,
+      branch: string,
+   },
+   job: {
+      encodedName: string,
+      queueItemNumber?: number,
+      buildNumber?: number,
+      status?: string,
+   },
+   greeting: {
+      language: string,
+   }
+}
+
+Before(() => {
+   const state = <ScenarioState>this
+
+   state.logger = winston.createLogger({
+      defaultMeta: { scenarioLogId: ulid() },
+      level: 'debug',
+      transports: [
+         new winston.transports.Console({ format: winston.format.json() })
+      ]
+   })
+})
 
 Given('the branch on GitHub is {string}', async (branchRef: string) => {
+   const state = <ScenarioState>this
+
    const match = branchRef.match(/^(.*)\/(.*):(.*)$/)
    const owner = match[1]
    const repo = match[2]
    const branch = match[3]
    const jobNameEncoded = `${encodeURIComponent(repo)}/${encodeURIComponent(branch)}`
 
+   state.logger.debug(
+      `Building the branch {owner}/{repo}:{branch}.`,
+      { data: { owner, repo, branch } }
+   )
+
    const jenkins = new JenkinsClient()
    const queueItemNumber = await jenkins.triggerBuild(jobNameEncoded)
 
-   this.github = { owner, repo, branch }
-   this.job = {
+   state.logger.info(
+      `Triggered the build and the queue item is {item}.`,
+      { data: { item: queueItemNumber } }
+   )
+
+   state.github = { owner, repo, branch }
+   state.job = {
       encodedName: jobNameEncoded,
       queueItemNumber
    }
 });
 
 Given('the language for greeting is {string}', (language: string) => {
-   this.greeting = { language }
+   const state = <ScenarioState>this
+   state.greeting = { language }
 });
 
 When('the Jenkins job is finished', async () => {
+   const state = <ScenarioState>this
+
    const jenkins = new JenkinsClient()
 
    let queuedItem = null
    do {
       await sleep(2)
-      queuedItem = await jenkins.getItemInQueue(this.job.queueItemNumber)
+      queuedItem = await jenkins.getItemInQueue(state.job.queueItemNumber)
    } while (!queuedItem.executable)
    const buildNumber: number = queuedItem.executable.number
+   state.logger.info(
+      `Build {number} is started.`,
+      { data: { number: buildNumber } }
+   )
 
    let buildResult
    do {
-      buildResult = await jenkins.getBuildResult(this.job.encodedName, buildNumber)
+      buildResult = await jenkins.getBuildResult(state.job.encodedName, buildNumber)
       await sleep(2)
    } while (!buildResult.result)
 
-   this.job.buildNumber = buildNumber
-   this.job.status = buildResult.result
+   state.job.buildNumber = buildNumber
+   state.job.status = buildResult.result
 });
 
 Then('the job output should contain the greeting {string}', async (expectedMessage: string) => {
+   const state = <ScenarioState>this
    let logs = ``
 
    const jenkins = new JenkinsClient()
-   const subscription = jenkins.getBuildLogStream(this.job.encodedName, this.job.buildNumber)
+   const subscription = jenkins.getBuildLogStream(state.job.encodedName, state.job.buildNumber)
       .subscribe(
          data => {
             if (data.includes(expectedMessage)) {
@@ -63,11 +115,13 @@ Then('the job output should contain the greeting {string}', async (expectedMessa
          }
       )
 
-   do { await sleep(.5) } while (!subscription.closed)
+   do { await sleep(1) } while (!subscription.closed)
 
    expect(logs).to.contain(expectedMessage)
 });
 
 Then('the job finished with {string} status', (expectedStatus: string) => {
-   expect(this.job.status).to.equal(expectedStatus)
+   const state = <ScenarioState>this
+
+   expect(state.job.status).to.equal(expectedStatus)
 });
