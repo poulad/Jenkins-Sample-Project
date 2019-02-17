@@ -6,9 +6,9 @@ pipeline {
                 checkout scm
             }
         }
-        stage 'Build', {
+        stage 'Greeting', {
             steps {
-                echo 'Hello, World!'
+                echo 'Hello World'
             }
         }
     }
