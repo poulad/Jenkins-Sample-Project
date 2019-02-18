@@ -1,5 +1,6 @@
 import * as Jenkins from 'jenkins'
 import { Observable } from 'rxjs'
+import { BuildLogs } from './build-logs';
 
 export class JenkinsClient {
    private _apiClient: Jenkins.JenkinsAPI
@@ -45,13 +46,23 @@ export class JenkinsClient {
       })
    }
 
-   getBuildLogStream(jobName: string, buildNumber: number): Observable<string> {
-      const log = this._apiClient.build.logStream(jobName, buildNumber, { type: 'html' } as any)
+   getBuildLogsStream(
+      jobName: string,
+      buildNumber: number,
+      format: 'text' | 'html' = 'html',
+      pollInterval: number = 1000
+   ): Observable<string> {
+      const log = this._apiClient.build.logStream(jobName, buildNumber, { type: format, delay: pollInterval } as any)
       return new Observable(subscriber => {
          log.on('data', data => { subscriber.next(data) })
          log.on('error', err => { subscriber.error(err) })
          log.on('end', () => { subscriber.complete() })
       })
+   }
+
+   async getBuildLogs(jobName: string, buildNumber: number): Promise<BuildLogs> {
+      const htmlLog = await this.getBuildLogsStream(jobName, buildNumber).toPromise()
+      return new BuildLogs(htmlLog)
    }
 
    async getBuildResult(jobName: string, buildNumber: number): Promise<any> {

@@ -17,11 +17,11 @@
 1. Run the UAT tests on Jenkins
 
     ```sh
-    npm test
+    npm start
     ```
 
 1. Store the test execution logs as structured JSON data.
 
     ```sh
-    npm test | grep --color=never --line-regexp --regexp='^\{\".*\}$' > /tmp/logs.json
+    npm start | grep --color=never --line-regexp --regexp='^\{\".*\}$' > /tmp/logs.json
     ```

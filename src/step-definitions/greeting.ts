@@ -1,9 +1,10 @@
 import { Given, When, Then, Before } from 'cucumber'
+import winston = require('winston');
 import { ulid } from 'ulid';
 import { expect } from 'chai'
 import { JenkinsClient } from '../jenkins-client';
 import { sleep } from './timeout';
-import winston = require('winston');
+import { PipelineLogParser } from '../jenkins-client/pipeline-log-parser';
 
 interface ScenarioState {
    logger: winston.Logger,
@@ -97,27 +98,13 @@ When('the Jenkins job is finished', async () => {
 
 Then('the job output should contain the greeting {string}', async (expectedMessage: string) => {
    const state = <ScenarioState>this
-   let logs = ``
 
    const jenkins = new JenkinsClient()
-   const subscription = jenkins.getBuildLogStream(state.job.encodedName, state.job.buildNumber)
-      .subscribe(
-         data => {
-            if (data.includes(expectedMessage)) {
-               logs = data
-               subscription.unsubscribe()
-            } else {
-               logs += data
-            }
-         },
-         err => {
-            throw new Error(err)
-         }
-      )
 
-   do { await sleep(1) } while (!subscription.closed)
+   const logs = await jenkins.getBuildLogs(state.job.encodedName, state.job.buildNumber)
+   const echoStepElement = PipelineLogParser.findEchoStep(logs, expectedMessage)
 
-   expect(logs).to.contain(expectedMessage)
+   expect(echoStepElement.textContent).to.contain(expectedMessage)
 });
 
 Then('the job finished with {string} status', (expectedStatus: string) => {
