@@ -1,12 +1,10 @@
 import * as Jenkins from 'jenkins'
 import * as url from 'url'
-import { Observable } from 'rxjs'
-import { BuildLogs } from './build-logs';
-import { JenkinsClientSettings } from './jenkins-client-settings';
+import { BuildLogs } from './build-logs'
+import { JenkinsClientSettings } from './jenkins-client-settings'
 
 export class JenkinsClient {
-   private _apiClient: Jenkins.JenkinsAPI
-   private _apiClient2: Jenkins.JenkinsPromisifiedAPI
+   private _apiClient: Jenkins.JenkinsPromisifiedAPI
 
    constructor(
       private _settings: JenkinsClientSettings
@@ -31,11 +29,6 @@ export class JenkinsClient {
       this._apiClient = Jenkins({
          baseUrl,
          crumbIssuer: true,
-      })
-
-      this._apiClient2 = Jenkins({
-         baseUrl,
-         crumbIssuer: true,
          promisify: true,
       })
    }
@@ -44,7 +37,7 @@ export class JenkinsClient {
     * Gets Jenkins server information
     */
    getServerInfo(): Promise<any> {
-      return this._apiClient2.info()
+      return this._apiClient.info()
    }
 
    /**
@@ -53,63 +46,27 @@ export class JenkinsClient {
     * @param jobName Name of the job e.g. 'my-repo/master'
     * @returns item number in the queue
     */
-   async triggerBuild(jobName: string): Promise<number> {
-      return new Promise((resolve, reject) => {
-         this._apiClient.job.build(jobName, (err, data) => {
-            if (err) {
-               reject(err)
+   triggerBuild(jobName: string): Promise<number> {
+      return this._apiClient.job.build(jobName)
+         .then(response => {
+            if (isNaN(parseInt(response))) {
+               throw new Error(`Expected the queued build number but got ${response}.`)
             } else {
-               const dataAsInt = parseInt(data)
-               if (isNaN(dataAsInt)) {
-                  reject(`Expected the queued build number but got ${data}.`)
-               } else {
-                  resolve(dataAsInt)
-               }
+               return +response
             }
          })
-      })
    }
 
-   getBuildLogsStream(
-      jobName: string,
-      buildNumber: number,
-      format: 'text' | 'html' = 'html',
-      pollInterval: number = 1000
-   ): Observable<string> {
-      const log = this._apiClient.build.logStream(jobName, buildNumber, { type: format, delay: pollInterval } as any)
-      return new Observable(subscriber => {
-         log.on('data', data => { subscriber.next(data) })
-         log.on('error', err => { subscriber.error(err) })
-         log.on('end', () => { subscriber.complete() })
-      })
+   getBuildLogs(jobName: string, buildNumber: number): Promise<BuildLogs> {
+      return this._apiClient.build.log(jobName, buildNumber, { type: 'html' } as any)
+         .then(response => new BuildLogs(response))
    }
 
-   async getBuildLogs(jobName: string, buildNumber: number): Promise<BuildLogs> {
-      const htmlLog = await this.getBuildLogsStream(jobName, buildNumber).toPromise()
-      return new BuildLogs(htmlLog)
+   getBuildResult(jobName: string, buildNumber: number): Promise<any> {
+      return this._apiClient.build.get(jobName, buildNumber)
    }
 
-   async getBuildResult(jobName: string, buildNumber: number): Promise<any> {
-      return new Promise((resolve, reject) => {
-         this._apiClient.build.get(jobName, buildNumber, (err, data) => {
-            if (err) {
-               reject(err)
-            } else {
-               resolve(data)
-            }
-         })
-      })
-   }
-
-   async getItemInQueue(itemNumber: number): Promise<any> {
-      return new Promise((resolve, reject) => {
-         this._apiClient.queue.item(itemNumber, (err, data) => {
-            if (err) {
-               reject(err)
-            } else {
-               resolve(data)
-            }
-         })
-      })
+   getItemInQueue(itemNumber: number): Promise<any> {
+      return this._apiClient.queue.item(itemNumber)
    }
 }

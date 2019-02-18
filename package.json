@@ -14,7 +14,6 @@
       "dotenv": "^6.2.0",
       "jenkins": "^0.23.0",
       "jsdom": "^13.2.0",
-      "rxjs": "^6.4.0",
       "ulid": "^2.3.0",
       "winston": "^3.2.1"
    },
@@ -24,7 +23,6 @@
       "@types/dotenv": "^6.1.0",
       "@types/jenkins": "^0.23.0",
       "@types/jsdom": "^12.2.2",
-      "@types/rx": "^4.1.1",
       "@types/winston": "^2.4.4",
       "ts-node": "^8.0.2",
       "typescript": "^3.3.3"

@@ -1,7 +1,7 @@
 import { setDefaultTimeout, BeforeAll } from 'cucumber'
 import * as winston from 'winston'
-import { getAppSettings } from '../settings';
-import { JenkinsClient } from '../jenkins/jenkins-client';
+import { getAppSettings } from '../settings'
+import { JenkinsClient } from '../jenkins/jenkins-client'
 
 setDefaultTimeout(-1)
 

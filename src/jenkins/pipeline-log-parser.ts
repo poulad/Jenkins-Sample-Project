@@ -1,4 +1,4 @@
-import { BuildLogs } from "./build-logs";
+import { BuildLogs } from "./build-logs"
 
 export module PipelineLogParser {
    export function findEchoStep(logs: BuildLogs, message: string): Element {
