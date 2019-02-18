@@ -1,13 +1,16 @@
-import { Given, When, Then, Before } from 'cucumber'
-import winston = require('winston');
-import { ulid } from 'ulid';
+import { Given, When, Then, Before, After } from 'cucumber'
+import { Logger } from 'winston'
+import { ulid } from 'ulid'
 import { expect } from 'chai'
-import { JenkinsClient } from '../jenkins-client';
-import { sleep } from './timeout';
-import { PipelineLogParser } from '../jenkins-client/pipeline-log-parser';
+import { PipelineLogParser } from '../jenkins/pipeline-log-parser'
+import { getAppSettings } from '../settings'
+import { BuildLogs } from '../jenkins/build-logs'
+import { JenkinsClient } from '../jenkins/jenkins-client'
+import { sleep, createLogger } from '.'
 
 interface ScenarioState {
-   logger: winston.Logger,
+   jenkinsClient: JenkinsClient,
+   logger: Logger,
    github: {
       owner: string,
       repo: string,
@@ -18,6 +21,7 @@ interface ScenarioState {
       queueItemNumber?: number,
       buildNumber?: number,
       status?: string,
+      logs?: BuildLogs
    },
    greeting: {
       language: string,
@@ -26,14 +30,12 @@ interface ScenarioState {
 
 Before(() => {
    const state = <ScenarioState>this
+   const logger = createLogger({ scenarioLogId: ulid() })
 
-   state.logger = winston.createLogger({
-      defaultMeta: { scenarioLogId: ulid() },
-      level: 'debug',
-      transports: [
-         new winston.transports.Console({ format: winston.format.json() })
-      ]
-   })
+   logger.debug(`Test Scenario execution is started.`)
+
+   state.logger = logger
+   state.jenkinsClient = new JenkinsClient(getAppSettings().jenkins)
 })
 
 Given('the branch on GitHub is {string}', async (branchRef: string) => {
@@ -50,8 +52,7 @@ Given('the branch on GitHub is {string}', async (branchRef: string) => {
       { data: { owner, repo, branch } }
    )
 
-   const jenkins = new JenkinsClient()
-   const queueItemNumber = await jenkins.triggerBuild(jobNameEncoded)
+   const queueItemNumber = await state.jenkinsClient.triggerBuild(jobNameEncoded)
 
    state.logger.info(
       `Triggered the build and the queue item is {item}.`,
@@ -73,12 +74,10 @@ Given('the language for greeting is {string}', (language: string) => {
 When('the Jenkins job is finished', async () => {
    const state = <ScenarioState>this
 
-   const jenkins = new JenkinsClient()
-
    let queuedItem = null
    do {
       await sleep(2)
-      queuedItem = await jenkins.getItemInQueue(state.job.queueItemNumber)
+      queuedItem = await state.jenkinsClient.getItemInQueue(state.job.queueItemNumber)
    } while (!queuedItem.executable)
    const buildNumber: number = queuedItem.executable.number
    state.logger.info(
@@ -88,22 +87,24 @@ When('the Jenkins job is finished', async () => {
 
    let buildResult
    do {
-      buildResult = await jenkins.getBuildResult(state.job.encodedName, buildNumber)
+      buildResult = await state.jenkinsClient.getBuildResult(state.job.encodedName, buildNumber)
       await sleep(2)
    } while (!buildResult.result)
 
+   const buildLogs = await state.jenkinsClient.getBuildLogs(state.job.encodedName, buildNumber)
+
    state.job.buildNumber = buildNumber
    state.job.status = buildResult.result
+   state.job.logs = buildLogs
 });
 
 Then('the job output should contain the greeting {string}', async (expectedMessage: string) => {
    const state = <ScenarioState>this
 
-   const jenkins = new JenkinsClient()
+   expect(state.job.logs.DomBody.innerHTML).to.contain(expectedMessage)
 
-   const logs = await jenkins.getBuildLogs(state.job.encodedName, state.job.buildNumber)
-   const echoStepElement = PipelineLogParser.findEchoStep(logs, expectedMessage)
-
+   const echoStepElement = PipelineLogParser.findEchoStep(state.job.logs, expectedMessage)
+   expect(echoStepElement).to.exist
    expect(echoStepElement.textContent).to.contain(expectedMessage)
 });
 
@@ -112,3 +113,8 @@ Then('the job finished with {string} status', (expectedStatus: string) => {
 
    expect(state.job.status).to.equal(expectedStatus)
 });
+
+After(() => {
+   const state = <ScenarioState>this
+   state.logger.debug(`Test scenario execution is finished.`)
+})

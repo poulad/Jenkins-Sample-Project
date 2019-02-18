@@ -1,26 +1,50 @@
 import * as Jenkins from 'jenkins'
+import * as url from 'url'
 import { Observable } from 'rxjs'
 import { BuildLogs } from './build-logs';
+import { JenkinsClientSettings } from './jenkins-client-settings';
 
 export class JenkinsClient {
    private _apiClient: Jenkins.JenkinsAPI
+   private _apiClient2: Jenkins.JenkinsPromisifiedAPI
 
-   constructor() {
-      this._apiClient = Jenkins({ baseUrl: 'http://admin:password@localhost:8080', crumbIssuer: true })
+   constructor(
+      private _settings: JenkinsClientSettings
+   ) {
+      let baseUrl: string
+      {
+         let parsedUrl: url.Url
+         try {
+            parsedUrl = url.parse(this._settings.baseUrl, false, false)
+         } catch (e) {
+            throw new Error(e)
+         }
+         if (/^https?:$/.test(parsedUrl.protocol)) {
+            const user = encodeURIComponent(this._settings.username)
+            const pass = encodeURIComponent(this._settings.password)
+            baseUrl = `${parsedUrl.protocol}//${user}:${pass}@${parsedUrl.host}${parsedUrl.path}`.replace(/\/+$/, '')
+         } else {
+            throw new Error(`Invalid protocol: ${parsedUrl.protocol}`)
+         }
+      }
+
+      this._apiClient = Jenkins({
+         baseUrl,
+         crumbIssuer: true,
+      })
+
+      this._apiClient2 = Jenkins({
+         baseUrl,
+         crumbIssuer: true,
+         promisify: true,
+      })
    }
 
    /**
     * Gets Jenkins server information
     */
-   async getServerInfo(): Promise<any> {
-      return new Promise((resolve, reject) => {
-         this._apiClient.info((err, data) => {
-            if (err)
-               reject(err)
-            else
-               resolve(data)
-         })
-      })
+   getServerInfo(): Promise<any> {
+      return this._apiClient2.info()
    }
 
    /**
